@@ -1,0 +1,16 @@
+{
+  "name": "xandros15/anime-charades",
+  "description": "anime charades for events or parties based on anime lists",
+  "type": "project",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "xandros15",
+      "email": "xandros92@gmail.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "php": ">=7.1"
+  }
+}
