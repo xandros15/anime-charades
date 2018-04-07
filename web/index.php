@@ -12,7 +12,6 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $slim = new App();
 $slim->get('[/]', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
 
-    dump($_SESSION);
     $app = new AnimeCharades();
     $lists = [];
 
