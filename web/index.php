@@ -1,7 +1,7 @@
 <?php
 
 use App\AnimeCharades;
-use App\AnimeList;
+use App\AnimeListManager;
 use Slim\App;
 
 session_start();
@@ -13,13 +13,7 @@ $slim = new App();
 $slim->get('[/]', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
 
     $app = new AnimeCharades();
-    $lists = [];
-
-    foreach (glob(__DIR__ . '/../storage/*.json') as $item) {
-        if ($list = AnimeList::load(basename($item, '.json'))) {
-            $lists[] = $list;
-        }
-    }
+    $lists = AnimeListManager::loadAll();
 
     if (!$lists) {
         throw new \Slim\Exception\NotFoundException($request, $response);
@@ -42,7 +36,7 @@ $slim->get('/fetch', function (\Slim\Http\Request $request, \Slim\Http\Response 
     foreach ($nicknames as $nickname) {
         $mal = new \App\Mal();
         $list = $mal->fetch($nickname);
-        $list->save();
+        AnimeListManager::save($list);
     }
 
     return $response->write('Done');

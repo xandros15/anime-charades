@@ -23,28 +23,6 @@ class AnimeList implements \Countable, \JsonSerializable
         $this->list = $list;
     }
 
-
-    /**
-     * @param string $name
-     *
-     * @return static|false
-     */
-    public static function load(string $name)
-    {
-        $filename = __DIR__ . '/../storage/' . $name . '.json';
-        if (file_exists($filename)) {
-            $content = file_get_contents($filename);
-            $list = json_decode($content);
-            if (!$list) {
-                throw new \RuntimeException('JSON ' . json_last_error_msg());
-            }
-
-            return new static($name, $list);
-        }
-
-        return false;
-    }
-
     /**
      * @return string
      */
@@ -89,13 +67,4 @@ class AnimeList implements \Countable, \JsonSerializable
         return $this->list;
     }
 
-    /**
-     * save the list on disk
-     */
-    public function save()
-    {
-        $filename = __DIR__ . '/../storage/' . $this->getName() . '.json';
-        file_put_contents($filename, json_encode($this->list));
-        chmod($filename, '0777');
-    }
 }
