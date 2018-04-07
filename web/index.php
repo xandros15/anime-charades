@@ -22,6 +22,10 @@ $slim->get('[/]', function (\Slim\Http\Request $request, \Slim\Http\Response $re
         }
     }
 
+    if (!$lists) {
+        throw new \Slim\Exception\NotFoundException($request, $response);
+    }
+
     $app->generateList($lists);
     $anime = $app->roll();
     $users = implode(', ', $anime->getUsers());
