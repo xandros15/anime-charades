@@ -53,9 +53,7 @@ class AnimeCharades
         usort($items, function (CharadeItem $a, CharadeItem $b) {
             return $a->getName() <=> $b->getName();
         });
-        dump(array_map(function (CharadeItem $a) {
-            return $a->getName();
-        }, $items));
+
         $this->list = $items;
     }
 
