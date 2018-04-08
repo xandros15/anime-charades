@@ -19,7 +19,7 @@ class AnimeListManager
             $content = file_get_contents($filename);
             $list = json_decode($content);
             $name = basename($filename, '.json');
-            if (!JSON_ERROR_NONE !== json_last_error()) {
+            if (JSON_ERROR_NONE !== json_last_error()) {
                 throw new \RuntimeException('JSON error: ' . json_last_error_msg());
             }
 
