@@ -92,9 +92,9 @@ $slim->get('/anime/hint', function (Request $request, Response $response) {
     return $response->withJson($payload);
 })->setName('anime.hint');
 
-$slim->get('/fetch', function (Request $request, Response $response) {
-    $nicknames = [
-    ];
+$slim->post('/fetch', function (Request $request, Response $response) {
+    $nicknames = $request->getParam('nicknames');
+
     foreach ($nicknames as $nickname) {
         $mal = new Mal();
         $list = $mal->fetch($nickname);
