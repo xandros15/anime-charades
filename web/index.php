@@ -4,9 +4,13 @@ use App\AnimeCharades;
 use App\AnimeListManager;
 use App\Database\Anime;
 use App\Database\SQLiteConnection;
+use App\Mal;
 use Slim\App;
 use Slim\Container;
 use Slim\Exception\NotFoundException;
+use Slim\Http\Request;
+use Slim\Http\Response;
+use Slim\Views\TwigExtension;
 
 session_start();
 
@@ -24,7 +28,7 @@ $container['view'] = function (Container $container) {
 
     // Instantiate and add Slim specific extension
     $basePath = rtrim(str_ireplace('index.php', '', $container['request']->getUri()->getBasePath()), '/');
-    $view->addExtension(new \Slim\Views\TwigExtension($container['router'], $basePath));
+    $view->addExtension(new TwigExtension($container['router'], $basePath));
 
     return $view;
 };
@@ -33,7 +37,7 @@ $container['anime'] = function () {
     return new Anime(new SQLiteConnection());
 };
 
-$slim->get('[/]', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
+$slim->get('[/]', function (Request $request, Response $response) {
 
     $app = new AnimeCharades();
     $lists = AnimeListManager::loadAll();
@@ -51,7 +55,7 @@ $slim->get('[/]', function (\Slim\Http\Request $request, \Slim\Http\Response $re
     ]);
 });
 
-$slim->get('/anime', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
+$slim->get('/anime', function (Request $request, Response $response) {
     $page = $request->getParam('p', 1);
     $search = $request->getParam('s', '');
     $items = $search ? $this->anime->search($search, $page) : $this->anime->list($page);
@@ -59,7 +63,7 @@ $slim->get('/anime', function (\Slim\Http\Request $request, \Slim\Http\Response 
     return $this->view->render($response, 'list.twig', ['items' => $items, 'page' => $page]);
 })->setName('anime.index');
 
-$slim->post('/anime/update/{id:\d+}', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
+$slim->post('/anime/update/{id:\d+}', function (Request $request, Response $response) {
     $id = (int) $request->getAttribute('id');
     $name = (string) trim($request->getParam('name', ''));
     if (!$name) {
@@ -71,14 +75,14 @@ $slim->post('/anime/update/{id:\d+}', function (\Slim\Http\Request $request, \Sl
     return $this->view->render($response, '_delete-form.twig', ['id' => $id, 'main' => $name]);
 })->setName('anime.update');
 
-$slim->post('/anime/delete/{id:\d+}', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
+$slim->post('/anime/delete/{id:\d+}', function (Request $request, Response $response) {
     $id = (int) $request->getAttribute('id');
     $this->anime->delete($id);
 
     return $this->view->render($response, '_update-form.twig', ['id' => $id]);
 })->setName('anime.delete');
 
-$slim->get('/anime/hint', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
+$slim->get('/anime/hint', function (Request $request, Response $response) {
     if (!$name = $request->getParam('query')) {
         throw new NotFoundException($request, $response);
     }
@@ -88,11 +92,11 @@ $slim->get('/anime/hint', function (\Slim\Http\Request $request, \Slim\Http\Resp
     return $response->withJson($payload);
 })->setName('anime.hint');
 
-$slim->get('/fetch', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
+$slim->get('/fetch', function (Request $request, Response $response) {
     $nicknames = [
     ];
     foreach ($nicknames as $nickname) {
-        $mal = new \App\Mal();
+        $mal = new Mal();
         $list = $mal->fetch($nickname);
         AnimeListManager::save($list);
     }
