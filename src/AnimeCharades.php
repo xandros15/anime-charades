@@ -6,7 +6,7 @@ namespace App;
 
 class AnimeCharades
 {
-    const NUMBER_OF_POSITIONS = 200;
+    const NUMBER_OF_POSITIONS = 400;
 
     /** @var Done */
     private $done;
@@ -38,8 +38,8 @@ class AnimeCharades
             $arrayList = $list->toArray();
             foreach ($arrayList as $item) {
                 if (!isset($items[$item])) {
-                    $items[$item] = new CharadeItem($item, $list->getName());;
-                } else {
+                    $items[$item] = new CharadeItem($item, $list->getName());
+                } elseif (!in_array($list->getName(), $items[$item]->getUsers())) {
                     $items[$item]->addUser($list->getName());
                 }
             }
