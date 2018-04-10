@@ -2,8 +2,10 @@
 
 use App\AnimeCharades;
 use App\AnimeListManager;
+use App\Database\Anime;
 use App\Database\SQLiteConnection;
 use Slim\App;
+use Slim\Container;
 use Slim\Exception\NotFoundException;
 
 session_start();
@@ -15,7 +17,7 @@ $slim = new App();
 $container = $slim->getContainer();
 
 // Register Twig View helper
-$container['view'] = function (\Slim\Container $container) {
+$container['view'] = function (Container $container) {
     $view = new \Slim\Views\Twig(__DIR__ . '/../templates', [
 //        'cache' => 'path/to/cache',
     ]);
@@ -25,6 +27,10 @@ $container['view'] = function (\Slim\Container $container) {
     $view->addExtension(new \Slim\Views\TwigExtension($container['router'], $basePath));
 
     return $view;
+};
+
+$container['anime'] = function () {
+    return new Anime(new SQLiteConnection());
 };
 
 $slim->get('[/]', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
@@ -39,35 +45,16 @@ $slim->get('[/]', function (\Slim\Http\Request $request, \Slim\Http\Response $re
     $app->generateList($lists);
     $anime = $app->roll();
 
-    $connection = (new SQLiteConnection())->connect();
-    $stmt = $connection->prepare("
-SELECT * FROM anime 
-WHERE `main` = (SELECT main FROM anime WHERE name = ? LIMIT 1)
-ORDER BY `name`
-");
-    $stmt->execute([$anime->getName()]);
-    $list = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
     return $this->view->render($response, 'game.twig', [
         'anime' => $anime,
-        'list' => $list,
+        'list' => $this->anime->related($anime->getName()),
     ]);
 });
 
 $slim->get('/anime', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
-
-    $connection = (new SQLiteConnection())->connect();
     $page = $request->getParam('p', 1);
     $search = $request->getParam('s', '');
-    if ($search) {
-        $offset = (int) ($page - 1) * 50;
-        $stmt = $connection->prepare("SELECT * FROM anime WHERE `name` LIKE ? ORDER BY `name` LIMIT 50 OFFSET " . $offset);
-        $stmt->execute(['%' . $search . '%']);
-        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } else {
-        $offset = (int) ($page - 1) * 500;
-        $items = $connection->query("SELECT * FROM anime ORDER BY name LIMIT 500 OFFSET " . $offset, PDO::FETCH_ASSOC);
-    }
+    $items = $search ? $this->anime->search($search, $page) : $this->anime->list($page);
 
     return $this->view->render($response, 'list.twig', ['items' => $items, 'page' => $page]);
 })->setName('anime.index');
@@ -78,31 +65,25 @@ $slim->post('/anime/update/{id:\d+}', function (\Slim\Http\Request $request, \Sl
     if (!$name) {
         throw new NotFoundException($request, $response);
     }
-    $connection = (new SQLiteConnection())->connect();
-    $stmt = $connection->prepare("UPDATE anime SET main = ? WHERE id = ?");
-    $stmt->execute([$name, $id]);
+
+    $this->anime->update($id, $name);
 
     return $this->view->render($response, '_delete-form.twig', ['id' => $id, 'main' => $name]);
 })->setName('anime.update');
 
 $slim->post('/anime/delete/{id:\d+}', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
     $id = (int) $request->getAttribute('id');
-    $connection = (new SQLiteConnection())->connect();
-    $stmt = $connection->prepare("UPDATE anime SET main = NULL WHERE id = ?");
-    $stmt->execute([$id]);
+    $this->anime->delete($id);
 
     return $this->view->render($response, '_update-form.twig', ['id' => $id]);
 })->setName('anime.delete');
 
 $slim->get('/anime/hint', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
-
     if (!$name = $request->getParam('query')) {
         throw new NotFoundException($request, $response);
     }
-    $connection = (new SQLiteConnection())->connect();
-    $stmt = $connection->prepare("SELECT name FROM anime WHERE name LIKE ? ORDER BY name LIMIT 10");
-    $stmt->execute(['%' . $name . '%']);
-    $payload = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $payload = $this->anime->hint($name);
 
     return $response->withJson($payload);
 })->setName('anime.hint');
