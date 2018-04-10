@@ -1,8 +1,25 @@
 {% extends 'base.twig' %}
 {% block content %}
-    <div>
-        <a target="_blank"
-           href="https://anidb.net/perl-bin/animedb.pl?adb.search={{ anime.getName() }}&show=search&do.search=search">{{ anime.getName() }}</a>
-        <p>Users: {{ anime.getUsers() | join(', ') }}</p>
+    <div class="row">
+        <div class="col-6">
+            <a target="_blank"
+               href="https://anidb.net/perl-bin/animedb.pl?adb.search={{ anime.getName() }}&show=search&do.search=search">{{ anime.getName() }}</a>
+            <p>Users: {{ anime.getUsers() | join(', ') }}</p>
+        </div>
+        <div class="col-6">
+            <ul>
+                {% for item in list %}
+                    <li>
+                        {% if item.mal_id %}
+                            <a href="https://myanimelist.net/anime/{{ item.mal_id }}"
+                               target="_blank">{{ item.name }}</a>
+                        {% else %}
+                            <a href="https://myanimelist.net/search/all?q={{ item.name }}"
+                               target="_blank">{{ item.name }}</a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 {% endblock %}

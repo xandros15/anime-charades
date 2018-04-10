@@ -39,8 +39,18 @@ $slim->get('[/]', function (\Slim\Http\Request $request, \Slim\Http\Response $re
     $app->generateList($lists);
     $anime = $app->roll();
 
+    $connection = (new SQLiteConnection())->connect();
+    $stmt = $connection->prepare("
+SELECT * FROM anime 
+WHERE `main` = (SELECT main FROM anime WHERE name = ? LIMIT 1)
+ORDER BY `name`
+");
+    $stmt->execute([$anime->getName()]);
+    $list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     return $this->view->render($response, 'game.twig', [
         'anime' => $anime,
+        'list' => $list,
     ]);
 });
 
