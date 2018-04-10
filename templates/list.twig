@@ -1,5 +1,15 @@
 {% extends 'base.twig' %}
 {% block content %}
+<form>
+    <div class="input-group mb-3">
+        <input type="search" name="s" class="form-control" placeholder="search" aria-label="search"
+               aria-describedby="basic-addon2">
+        <div class="input-group-append">
+            <button class="btn btn-primary">search</button>
+            <a class="btn btn-success" href="{{ path_for('anime.index') }}">reset</a>
+        </div>
+    </div>
+</form>
 <table class="table">
     <thead>
     <tr>
