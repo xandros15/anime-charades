@@ -3,6 +3,7 @@
 use App\AnimeCharades;
 use App\AnimeListManager;
 use Slim\App;
+use Slim\Exception\NotFoundException;
 
 session_start();
 
@@ -32,18 +33,15 @@ $slim->get('[/]', function (\Slim\Http\Request $request, \Slim\Http\Response $re
     $lists = AnimeListManager::loadAll();
 
     if (!$lists) {
-        throw new \Slim\Exception\NotFoundException($request, $response);
+        throw new NotFoundException($request, $response);
     }
 
     $app->generateList($lists);
     $anime = $app->roll();
-    $users = implode(', ', $anime->getUsers());
-    $payload = "<div>
-        <a target=\"_blank\" href=\"https://anidb.net/perl-bin/animedb.pl?adb.search={$anime->getName()}&show=search&do.search=search\">{$anime->getName()}</a>
-        <p>Users: {$users}</p> 
-    </div>";
 
-    return $response->write($payload);
+    return $this->view->render($response, 'game.twig', [
+        'anime' => $anime,
+    ]);
 });
 
 $slim->get('/fetch', function (\Slim\Http\Request $request, \Slim\Http\Response $response) {
