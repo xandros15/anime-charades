@@ -1,0 +1,15 @@
+<form class="form-update" action="{{ path_for('anime.update', {'id': id}) }}" method="post">
+    <div class="input-group" style="position: relative">
+        <input id="anime-input-{{ id }}" type="text"
+               class="typeahead form-control btn-group" autocomplete="off"
+               name="name" title="anime name to update">
+        <input type="hidden" name="id" value="{{ id }}">
+        <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button" onclick="
+                    document.getElementById('anime-input-{{ id }}').value = document.getElementById('anime-name-{{ id }}').textContent.trim()">
+                Copy
+            </button>
+            <button class="btn btn-outline-secondary">Update</button>
+        </div>
+    </div>
+</form>

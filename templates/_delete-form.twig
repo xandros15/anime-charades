@@ -1,0 +1,6 @@
+<form class="form-delete" action="{{ path_for('anime.delete', {'id': id}) }}"
+      method="post">
+    <span>{{ main }}</span>
+    <input type="hidden" name="{{ id }}">
+    <button class="btn btn-outline-secondary float-right">Remove</button>
+</form>

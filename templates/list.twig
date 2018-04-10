@@ -1,0 +1,76 @@
+{% extends 'base.twig' %}
+{% block content %}
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col">#</th>
+        <th scope="col">Nazwa</th>
+        <th scope="col">Główny</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in items %}
+    <tr>
+        <td scope="row" id="#item">{{ item.id }}</td>
+        <td id="anime-name-{{ item.id }}">
+            {% if item.mal_id %}
+                <a href="https://myanimelist.net/anime/{{ item.mal_id }}" target="_blank">{{ item.name }}</a>
+            {% else %}
+                <a href="https://myanimelist.net/search/all?q={{ item.name }}" target="_blank">{{ item.name }}</a>
+            {% endif %}
+        </td>
+        {% if not item.main %}
+        <td>
+            {% include '_update-form.twig' with {id:item.id} %}
+        </td>
+        {% else %}
+        <td>
+            {% include '_delete-form.twig' with {id:item.id, main:item.main} %}
+        </td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<span><a href="{{ path_for('anime.index', {}, {'p':  max(page - 1, 1)}) }}">Prev</a> | <a
+            href="{{ path_for('anime.index', {}, {'p':   min(page + 1, 13)}) }}">Next</a></span>
+{% endblock %}
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+    <script>
+        function typeheadCall() {
+            if (this.value.length > 3) {
+                var that = this;
+                $.get("{{ path_for('anime.hint') }}", {query: this.value}, function (data) {
+                    $(that).typeahead({source: data});
+                }, 'json');
+            }
+        }
+
+        function onUpdate(e) {
+            e.preventDefault();
+            var that = this;
+            $.post(this.action, {name: this.elements.name.value}, function (payload) {
+                var container = that.parentElement;
+                container.innerHTML = payload;
+                $(container).find('.form-delete').submit(onDelete);
+            });
+        }
+
+        function onDelete(e) {
+            e.preventDefault();
+            var that = this;
+            $.post(this.action, function (payload) {
+                var container = that.parentElement;
+                container.innerHTML = payload;
+                var form = $(container).find('.form-update')
+                form.submit(onUpdate);
+                form.find('.typeahead').on('input', typeheadCall);
+            });
+        }
+
+        $('.typeahead').on('input', typeheadCall);
+        $('.form-update').submit(onUpdate);
+        $('.form-delete').submit(onDelete);
+    </script>
+{% endblock %}
