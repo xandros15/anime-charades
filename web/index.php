@@ -4,6 +4,7 @@ use App\AnimeCharades;
 use App\AnimeListManager;
 use App\Database\Anime;
 use App\Database\SQLiteConnection;
+use App\Database\Translator;
 use App\Mal;
 use Slim\App;
 use Slim\Container;
@@ -33,6 +34,10 @@ $container['view'] = function (Container $container) {
     return $view;
 };
 
+$container['translator'] = function () {
+    return new Translator(new SQLiteConnection());
+};
+
 $container['anime'] = function () {
     return new Anime(new SQLiteConnection());
 };
@@ -46,7 +51,7 @@ $slim->get('[/]', function (Request $request, Response $response) {
         throw new NotFoundException($request, $response);
     }
 
-    $app->generateList($lists);
+    $app->generateList($lists, $this->translator);
     $anime = $app->roll();
 
     return $this->view->render($response, 'game.twig', [

@@ -4,6 +4,8 @@
 namespace App;
 
 
+use App\Database\Translator;
+
 class AnimeCharades
 {
     const NUMBER_OF_POSITIONS = 400;
@@ -26,8 +28,9 @@ class AnimeCharades
 
     /**
      * @param AnimeList[] $lists
+     * @param Translator $translator
      */
-    public function generateList(array $lists)
+    public function generateList(array $lists, Translator $translator)
     {
         /** @var $items CharadeItem[] */
         $items = [];
@@ -37,10 +40,11 @@ class AnimeCharades
             }
             $arrayList = $list->toArray();
             foreach ($arrayList as $item) {
-                if (!isset($items[$item])) {
-                    $items[$item] = new CharadeItem($item, $list->getName());
-                } elseif (!in_array($list->getName(), $items[$item]->getUsers())) {
-                    $items[$item]->addUser($list->getName());
+                $name = $translator->translate($item);
+                if (!isset($items[$name])) {
+                    $items[$name] = new CharadeItem($name, $list->getName());
+                } elseif (!in_array($list->getName(), $items[$name]->getUsers())) {
+                    $items[$name]->addUser($list->getName());
                 }
             }
         }
