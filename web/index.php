@@ -1,6 +1,7 @@
 <?php
 
 use App\AnimeCharades;
+use App\AnimeCharadesManager;
 use App\AnimeListManager;
 use App\Database\Anime;
 use App\Database\SQLiteConnection;
@@ -46,6 +47,10 @@ $container['listManager'] = function () {
     return new AnimeListManager();
 };
 
+$container['charades'] = function () {
+    return new AnimeCharadesManager();
+};
+
 
 $slim->group('/online', function () {
     /** @var $slim App */
@@ -61,17 +66,14 @@ $slim->group('/online', function () {
             throw new NotFoundException($request, $response);
         }
 
-        $charades = AnimeCharades::newGame($lists, $this->translator);
+        /** @var $game AnimeCharades */
+        $game = $this->charades->createGame($lists, $this->translator);
 
-        return $response->withRedirect($this->router->pathFor('online.join', ['game' => $charades->getName()]));
+        return $response->withRedirect($this->router->pathFor('online.join', ['game' => $game->getName()]));
     })->setName('online.new.post');
 
     $slim->get('/new', function (Request $request, Response $response) {
         $lists = $this->listManager->listAll();
-
-        if (!$lists) {
-            throw new NotFoundException($request, $response);
-        }
 
         return $this->view->render($response, 'new-online.twig', [
             'lists' => $lists,
@@ -85,17 +87,18 @@ $slim->group('/online', function () {
         $slim->get('[/]', function (Request $request, Response $response) {
             $gameName = $request->getAttribute('game');
             try {
-                $charades = AnimeCharades::load($gameName);
+                /** @var $game AnimeCharades */
+                $game = $this->charades->load($gameName);
             } catch (\RuntimeException $e) {
                 throw new NotFoundException($request, $response);
             }
-            if (!$charades->isClosed()) {
+            if (!$game->isStarted()) {
                 return $this->view->render($response, 'game-message.twig', [
                     'message' => 'Gra jeszcze nie wystartowała',
                 ]);
             } else {
-                if ($_SESSION['game'][$request->getAttribute('game')]['nickname'] == $charades->getCurrentPlayer()) {
-                    $anime = $charades->roll();
+                if ($_SESSION['game'][$request->getAttribute('game')]['nickname'] == $game->getCurrentPlayer()) {
+                    $anime = $game->roll();
 
                     return $this->view->render($response, 'game-online.twig', [
                         'game' => $gameName,
@@ -105,7 +108,7 @@ $slim->group('/online', function () {
                 } else {
 
                     return $this->view->render($response, 'game-message.twig', [
-                        'message' => 'Pokazuje ' . $charades->getCurrentPlayer(),
+                        'message' => 'Pokazuje ' . $game->getCurrentPlayer(),
                     ]);
                 }
             }
@@ -115,11 +118,12 @@ $slim->group('/online', function () {
         $slim->get('/next', function (Request $request, Response $response) {
             $gameName = $request->getAttribute('game');
             try {
-                $charades = AnimeCharades::load($gameName);
-                if ($charades->getCurrentPlayer() != $_SESSION['game'][$request->getAttribute('game')]['nickname']) {
-                    throw new \RuntimeException('Tylko ' . $charades->getCurrentPlayer() . ' może oddać turę');
+                /** @var $game AnimeCharades */
+                $game = $this->charades->load($gameName);
+                if ($game->getCurrentPlayer() != $_SESSION['game'][$request->getAttribute('game')]['nickname']) {
+                    throw new \RuntimeException('Tylko ' . $game->getCurrentPlayer() . ' może oddać turę');
                 } else {
-                    $charades->chosePlayer();
+                    $game->chosePlayer();
                 }
             } catch (\RuntimeException $e) {
                 return $this->view->render($response, 'game-message.twig', ['message' => $e->getMessage()]);
@@ -131,10 +135,11 @@ $slim->group('/online', function () {
         $slim->get('/start', function (Request $request, Response $response) {
             $gameName = $request->getAttribute('game');
             try {
-                $charades = AnimeCharades::load($gameName);
-                if (!$charades->isClosed() && $charades->getPlayers()) {
-                    $charades->close();
-                    $charades->chosePlayer();
+                /** @var $game AnimeCharades */
+                $game = $this->charades->load($gameName);
+                if (!$game->isStarted() && $game->getPlayers()) {
+                    $game->start();
+                    $game->chosePlayer();
                 }
             } catch (\RuntimeException $e) {
                 throw new NotFoundException($request, $response);
@@ -153,10 +158,10 @@ $slim->group('/online', function () {
             if (!$nickname) {
                 throw new NotFoundException($request, $response);
             }
-
             try {
-                $charades = AnimeCharades::load($gameName);
-                $charades->addPlayer($nickname);
+                /** @var $game AnimeCharades */
+                $game = $this->charades->load($gameName);
+                $game->addPlayer($nickname);
                 $_SESSION['game'][$request->getAttribute('game')]['nickname'] = $nickname;
             } catch (\RuntimeException $e) {
                 return $this->view->render($response, 'game-message.twig', ['message' => $e->getMessage()]);
@@ -172,7 +177,7 @@ $slim->group('/online', function () {
 });
 
 $slim->get('/restart', function (Request $request, Response $response) {
-    AnimeCharades::delete('single');
+    $this->charades->delete('single');
 
     return $response->withRedirect($this->router->pathFor('single.create'));
 })->setName('single.restart');
@@ -187,7 +192,7 @@ $slim->post('/new', function (Request $request, Response $response) {
         return $this->view->render($response, 'game-message.twig', ['message' => 'Ale wybierz jakąś liste, proszę']);
     }
 
-    AnimeCharades::newGame($lists, $this->translator, 'single');
+    $this->charades->createGame($lists, $this->translator, 'single');
 
     return $response->withRedirect($this->router->pathFor('single'));
 })->setName('single.new.post');
@@ -202,7 +207,8 @@ $slim->get('/new', function (Request $request, Response $response) {
 
 $slim->get('[/]', function (Request $request, Response $response) {
     try {
-        $charades = AnimeCharades::load('single');
+        /** @var $charades AnimeCharades */
+        $charades = $this->charades->load('single');
     } catch (\RuntimeException $e) {
         return $response->withRedirect($this->router->pathFor('single.new'));
     }

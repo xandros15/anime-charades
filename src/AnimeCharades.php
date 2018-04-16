@@ -4,13 +4,10 @@
 namespace App;
 
 
-use App\Database\Translator;
-
 class AnimeCharades implements \JsonSerializable
 {
-    const NUMBER_OF_POSITIONS = 200;
 
-    private const GAMES_DIR = __DIR__ . '/../storage/games/%s.json';
+    const GAMES_DIR = __DIR__ . '/../storage/games/%s.json';
 
     /** @var CharadeItem[] */
     private $done = [];
@@ -19,55 +16,58 @@ class AnimeCharades implements \JsonSerializable
     /** @var string */
     private $name;
     /** @var array */
-    private $players = [];
+    private $players;
     /** @var bool */
-    private $close = false;
+    private $started;
     /** @var string */
-    private $player = null;
-
-    public function close()
-    {
-        $this->close = true;
-    }
-
-
-    public static function delete(string $name)
-    {
-        $filename = sprintf(self::GAMES_DIR, $name);
-        @unlink($filename);
-    }
+    private $currentPlayer;
 
     /**
-     * @param string $name
+     * AnimeCharades constructor.
      *
-     * @return AnimeCharades
+     * @param string $name
+     * @param CharadeItem[] $list
+     * @param CharadeItem[] $done
+     * @param bool $started
+     * @param null $currentPlayer
+     * @param array $players
      */
-    public static function load(string $name)
-    {
-        $charades = new self();
-        $filename = sprintf(self::GAMES_DIR, $name);
-        if (!file_exists($filename)) {
-            throw new \RuntimeException('Game file not found');
-        }
-        $json = file_get_contents($filename);
-        $game = json_decode($json, true);
-        unset($json);
-        $charades->name = $name;
-        $charades->players = $game['players'];
-        $charades->close = $game['close'];
-        $charades->player = $game['player'];
-        $charades->loadDone($game['done']);
-        $charades->loadList($game['list']);
+    public function __construct(
+        string $name,
+        array $list,
+        array $done = [],
+        bool $started = false,
+        $currentPlayer = null,
+        array $players = []
+    ) {
+        $this->name = $name;
+        $this->list = $list;
+        $this->done = $done;
+        $this->started = $started;
+        $this->currentPlayer = $currentPlayer;
+        $this->players = $players;
+    }
 
-        return $charades;
+    public function __destruct()
+    {
+        if ($this->name) {
+            $filename = sprintf(self::GAMES_DIR, $this->name);
+            $json = json_encode($this);
+            file_put_contents($filename, $json);
+        }
+    }
+
+    public function start()
+    {
+        $this->started = true;
     }
 
     /**
      * @return bool
      */
-    public function isClosed(): bool
+    public function isStarted(): bool
     {
-        return (bool) $this->close;
+        return (bool) $this->started;
     }
 
     /**
@@ -83,7 +83,7 @@ class AnimeCharades implements \JsonSerializable
      */
     public function addPlayer(string $name)
     {
-        if ($this->close) {
+        if ($this->started) {
             throw new \RuntimeException('Game is close');
         }
         if (in_array($name, $this->players)) {
@@ -99,116 +99,21 @@ class AnimeCharades implements \JsonSerializable
 
     public function chosePlayer()
     {
-        if ($this->player === null) {
-            $this->player = $this->players[array_rand($this->players)];
+        if ($this->currentPlayer === null) {
+            $this->currentPlayer = $this->players[array_rand($this->players)];
         } else {
-            $index = array_search($this->player, $this->players);
+            $index = array_search($this->currentPlayer, $this->players);
             if (!$index) {
-                $this->player = $this->players[array_rand($this->players)];
+                $this->currentPlayer = $this->players[array_rand($this->players)];
             } else {
-                $this->player = $this->players[($index + 1) % count($this->players)];
+                $this->currentPlayer = $this->players[($index + 1) % count($this->players)];
             }
         }
     }
 
     public function getCurrentPlayer(): string
     {
-        return $this->player;
-    }
-
-    /**
-     * @param array $list
-     */
-    private function loadList(array $list)
-    {
-        foreach ($list as $item) {
-            $user = reset($item['users']);
-            unset($item['users'][0]);
-            $charadeItem = new CharadeItem($item['name'], $user);
-            foreach ($item['users'] as $user) {
-                $charadeItem->addUser($user);
-            }
-            $this->list[] = $charadeItem;
-        }
-    }
-
-    /**
-     * @param array $done
-     */
-    private function loadDone(array $done)
-    {
-        foreach ($done as $item) {
-            $user = reset($item['users']);
-            unset($item['users'][0]);
-            $charadeItem = new CharadeItem($item['name'], $user);
-            foreach ($item['users'] as $user) {
-                $charadeItem->addUser($user);
-            }
-            $this->done[] = $charadeItem;
-        }
-    }
-
-    /**
-     * @param array $lists
-     * @param Translator $translator
-     *
-     * @param string $name
-     *
-     * @return AnimeCharades
-     */
-    public static function newGame(array $lists, Translator $translator, string $name = '')
-    {
-        $charades = new self();
-        $charades->generateList($lists, $translator);
-        $json = json_encode($charades);
-        $charades->name = $name ?: substr(sha1($json), 0, 8);
-
-        return $charades;
-    }
-
-
-    public function __destruct()
-    {
-        if ($this->name) {
-            $filename = sprintf(self::GAMES_DIR, $this->name);
-            $json = json_encode($this);
-            file_put_contents($filename, $json);
-        }
-    }
-
-    /**
-     * @param AnimeList[] $lists
-     * @param Translator $translator
-     */
-    public function generateList(array $lists, Translator $translator)
-    {
-        /** @var $items CharadeItem[] */
-        $items = [];
-        foreach ($lists as $list) {
-            if (!$list instanceof AnimeList) {
-                throw new \InvalidArgumentException('List must be a ' . AnimeList::class . ' instance');
-            }
-            $arrayList = $list->toArray();
-            foreach ($arrayList as $item) {
-                $name = $translator->translate($item);
-                if (!isset($items[$name])) {
-                    $items[$name] = new CharadeItem($name, $list->getName());
-                } elseif (!in_array($list->getName(), $items[$name]->getUsers())) {
-                    $items[$name]->addUser($list->getName());
-                }
-            }
-        }
-
-        usort($items, function (CharadeItem $a, CharadeItem $b) {
-            return $b->count() <=> $a->count();
-        });
-
-        $items = array_slice($items, 0, self::NUMBER_OF_POSITIONS, true);
-        usort($items, function (CharadeItem $a, CharadeItem $b) {
-            return $a->getName() <=> $b->getName();
-        });
-
-        $this->list = $items;
+        return $this->currentPlayer;
     }
 
     /**
@@ -234,8 +139,8 @@ class AnimeCharades implements \JsonSerializable
     public function jsonSerialize()
     {
         $game = [
-            'close' => $this->close,
-            'player' => $this->player,
+            'started' => $this->started,
+            'player' => $this->currentPlayer,
             'players' => $this->players,
             'list' => $this->list,
             'done' => $this->done,
