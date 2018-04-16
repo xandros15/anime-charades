@@ -12,7 +12,7 @@ class AnimeListManager
     /**
      * @return array
      */
-    public static function listAll(): array
+    public function listAll(): array
     {
         $lists = [];
         foreach (glob(self::DIRECTORY . '*.json') as $filename) {
@@ -25,7 +25,7 @@ class AnimeListManager
     /**
      * @return AnimeList[]
      */
-    public static function loadAll(): array
+    public function loadAll(): array
     {
         $lists = [];
         foreach (glob(self::DIRECTORY . '*.json') as $filename) {
@@ -47,7 +47,7 @@ class AnimeListManager
      *
      * @return AnimeList|bool
      */
-    public static function load(string $name)
+    public function load(string $name)
     {
         $filename = self::DIRECTORY . $name . '.json';
         if (file_exists($filename)) {
@@ -69,7 +69,7 @@ class AnimeListManager
      *
      * @param AnimeList $list
      */
-    public static function save(AnimeList $list)
+    public function save(AnimeList $list)
     {
         $filename = self::DIRECTORY . $list->getName() . '.json';
         file_put_contents($filename, (string) $list);

@@ -42,6 +42,10 @@ $container['anime'] = function () {
     return new Anime(new SQLiteConnection());
 };
 
+$container['listManager'] = function () {
+    return new AnimeListManager();
+};
+
 
 $slim->group('/online', function () {
     /** @var $slim App */
@@ -50,7 +54,7 @@ $slim->group('/online', function () {
     $slim->post('/new', function (Request $request, Response $response) {
         $lists = [];
         foreach ($request->getParam('lists', []) as $listName) {
-            $lists[] = AnimeListManager::load($listName);
+            $lists[] = $this->listManager->load($listName);
         }
 
         if (!$lists) {
@@ -63,7 +67,7 @@ $slim->group('/online', function () {
     })->setName('online.new.post');
 
     $slim->get('/new', function (Request $request, Response $response) {
-        $lists = AnimeListManager::listAll();
+        $lists = $this->listManager->listAll();
 
         if (!$lists) {
             throw new NotFoundException($request, $response);
@@ -176,7 +180,7 @@ $slim->get('/restart', function (Request $request, Response $response) {
 $slim->post('/new', function (Request $request, Response $response) {
     $lists = [];
     foreach ($request->getParam('lists') as $list) {
-        $lists[] = AnimeListManager::load($list);
+        $lists[] = $this->listManager->load($list);
     }
 
     if (!$lists) {
@@ -189,7 +193,7 @@ $slim->post('/new', function (Request $request, Response $response) {
 })->setName('single.new.post');
 
 $slim->get('/new', function (Request $request, Response $response) {
-    $lists = AnimeListManager::listAll();
+    $lists = $this->listManager->listAll();
 
     return $this->view->render($response, 'new-single.twig', [
         'lists' => $lists,
@@ -255,7 +259,7 @@ $slim->post('/fetch', function (Request $request, Response $response) {
     }
     $mal = new Mal();
     $list = $mal->fetch($nickname);
-    AnimeListManager::save($list);
+    $this->listManager->save($list);
     $referer = $request->getServerParam('HTTP_REFERER');
 
     return $response->withRedirect($referer);
