@@ -103,11 +103,7 @@ class AnimeCharades implements \JsonSerializable
             $this->currentPlayer = $this->players[array_rand($this->players)];
         } else {
             $index = array_search($this->currentPlayer, $this->players);
-            if (!$index) {
-                $this->currentPlayer = $this->players[array_rand($this->players)];
-            } else {
-                $this->currentPlayer = $this->players[($index + 1) % count($this->players)];
-            }
+            $this->currentPlayer = $this->players[($index + 1) % count($this->players)];
         }
     }
 
