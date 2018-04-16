@@ -7,7 +7,7 @@ namespace App;
 class AnimeListManager
 {
 
-    private const DIRECTORY = __DIR__ . '/../storage/';
+    private const DIRECTORY = __DIR__ . '/../storage/lists/';
 
     /**
      * @return AnimeList[]
