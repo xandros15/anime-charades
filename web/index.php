@@ -42,23 +42,174 @@ $container['anime'] = function () {
     return new Anime(new SQLiteConnection());
 };
 
-$slim->get('[/]', function (Request $request, Response $response) {
 
-    $app = new AnimeCharades();
-    $lists = AnimeListManager::loadAll();
+$slim->group('/online', function () {
+    /** @var $slim App */
+    $slim = $this;
 
-    if (!$lists) {
-        throw new NotFoundException($request, $response);
+    $slim->post('/new', function (Request $request, Response $response) {
+        $lists = [];
+        foreach ($request->getParam('lists', []) as $listName) {
+            $lists[] = AnimeListManager::load($listName);
+        }
+
+        if (!$lists) {
+            throw new NotFoundException($request, $response);
+        }
+
+        $charades = AnimeCharades::newGame($lists, $this->translator);
+
+        return $response->withRedirect($this->router->pathFor('online.join', ['game' => $charades->getName()]));
+    })->setName('online.new.post');
+
+    $slim->get('/new', function (Request $request, Response $response) {
+        $lists = AnimeListManager::listAll();
+
+        if (!$lists) {
+            throw new NotFoundException($request, $response);
+        }
+
+        return $this->view->render($response, 'new-online.twig', [
+            'lists' => $lists,
+        ]);
+    })->setName('online.new');
+
+    $slim->group('/{game:\w+}', function () {
+        /** @var $slim App */
+        $slim = $this;
+
+        $slim->get('[/]', function (Request $request, Response $response) {
+            $gameName = $request->getAttribute('game');
+            try {
+                $charades = AnimeCharades::load($gameName);
+            } catch (\RuntimeException $e) {
+                throw new NotFoundException($request, $response);
+            }
+            if (!$charades->isClosed()) {
+                return $this->view->render($response, 'game-message.twig', [
+                    'message' => 'Gra jeszcze nie wystartowała',
+                ]);
+            } else {
+                if ($_SESSION['game'][$request->getAttribute('game')]['nickname'] == $charades->getCurrentPlayer()) {
+                    $anime = $charades->roll();
+
+                    return $this->view->render($response, 'game-online.twig', [
+                        'game' => $gameName,
+                        'anime' => $anime,
+                        'list' => $this->anime->related($anime->getName()),
+                    ]);
+                } else {
+
+                    return $this->view->render($response, 'game-message.twig', [
+                        'message' => 'Pokazuje ' . $charades->getCurrentPlayer(),
+                    ]);
+                }
+            }
+
+        })->setName('online.game');
+
+        $slim->get('/next', function (Request $request, Response $response) {
+            $gameName = $request->getAttribute('game');
+            try {
+                $charades = AnimeCharades::load($gameName);
+                if ($charades->getCurrentPlayer() != $_SESSION['game'][$request->getAttribute('game')]['nickname']) {
+                    throw new \RuntimeException('Tylko ' . $charades->getCurrentPlayer() . ' może oddać turę');
+                } else {
+                    $charades->chosePlayer();
+                }
+            } catch (\RuntimeException $e) {
+                return $this->view->render($response, 'game-message.twig', ['message' => $e->getMessage()]);
+            }
+
+            return $response->withRedirect($this->router->pathFor('online.game', ['game' => $gameName]));
+        })->setName('online.next');
+
+        $slim->get('/start', function (Request $request, Response $response) {
+            $gameName = $request->getAttribute('game');
+            try {
+                $charades = AnimeCharades::load($gameName);
+                if (!$charades->isClosed() && $charades->getPlayers()) {
+                    $charades->close();
+                    $charades->chosePlayer();
+                }
+            } catch (\RuntimeException $e) {
+                throw new NotFoundException($request, $response);
+            }
+
+            return $response->withRedirect($this->router->pathFor('online.game', ['game' => $gameName]));
+        })->setName('online.start');
+
+        $slim->post('/join', function (Request $request, Response $response) {
+            $gameName = $request->getAttribute('game');
+            if (isset($_SESSION['game'][$request->getAttribute('game')]['nickname'])) {
+                return $response->withRedirect($this->router->pathFor('online.game', $gameName));
+            }
+
+            $nickname = $request->getParam('nickname');
+            if (!$nickname) {
+                throw new NotFoundException($request, $response);
+            }
+
+            try {
+                $charades = AnimeCharades::load($gameName);
+                $charades->addPlayer($nickname);
+                $_SESSION['game'][$request->getAttribute('game')]['nickname'] = $nickname;
+            } catch (\RuntimeException $e) {
+                return $this->view->render($response, 'game-message.twig', ['message' => $e->getMessage()]);
+            }
+
+            return $response->withRedirect($this->router->pathFor('online.game', ['game' => $gameName]));
+        })->setName('online.join.post');
+
+        $slim->get('/join', function (Request $request, Response $response) {
+            return $this->view->render($response, 'new-online-join.twig', ['game' => $request->getAttribute('game')]);
+        })->setName('online.join');
+    });
+});
+
+$slim->get('/restart', function (Request $request, Response $response) {
+    AnimeCharades::delete('single');
+
+    return $response->withRedirect($this->router->pathFor('single.create'));
+})->setName('single.restart');
+
+$slim->post('/new', function (Request $request, Response $response) {
+    $lists = [];
+    foreach ($request->getParam('lists') as $list) {
+        $lists[] = AnimeListManager::load($list);
     }
 
-    $app->generateList($lists, $this->translator);
-    $anime = $app->roll();
+    if (!$lists) {
+        return $this->view->render($response, 'game-message.twig', ['message' => 'Ale wybierz jakąś liste, proszę']);
+    }
+
+    AnimeCharades::newGame($lists, $this->translator, 'single');
+
+    return $response->withRedirect($this->router->pathFor('single'));
+})->setName('single.new.post');
+
+$slim->get('/new', function (Request $request, Response $response) {
+    $lists = AnimeListManager::listAll();
+
+    return $this->view->render($response, 'new-single.twig', [
+        'lists' => $lists,
+    ]);
+})->setName('single.new');
+
+$slim->get('[/]', function (Request $request, Response $response) {
+    try {
+        $charades = AnimeCharades::load('single');
+    } catch (\RuntimeException $e) {
+        return $response->withRedirect($this->router->pathFor('single.new'));
+    }
+
+    $anime = $charades->roll();
 
     return $this->view->render($response, 'game.twig', [
         'anime' => $anime,
         'list' => $this->anime->related($anime->getName()),
     ]);
-});
+})->setName('single');
 
 $slim->get('/anime', function (Request $request, Response $response) {
     $page = $request->getParam('p', 1);
@@ -98,16 +249,17 @@ $slim->get('/anime/hint', function (Request $request, Response $response) {
 })->setName('anime.hint');
 
 $slim->post('/fetch', function (Request $request, Response $response) {
-    $nicknames = $request->getParam('nicknames');
-
-    foreach ($nicknames as $nickname) {
-        $mal = new Mal();
-        $list = $mal->fetch($nickname);
-        AnimeListManager::save($list);
+    $nickname = $request->getParam('nickname');
+    if (!$nickname) {
+        return $this->view->render($response, 'game-message.twig', ['message' => 'Może być wpisał jakąś liste']);
     }
+    $mal = new Mal();
+    $list = $mal->fetch($nickname);
+    AnimeListManager::save($list);
+    $referer = $request->getServerParam('HTTP_REFERER');
 
-    return $response->write('Done');
-});
+    return $response->withRedirect($referer);
+})->setName('fetch');
 
 
 $slim->run();

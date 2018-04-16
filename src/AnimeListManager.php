@@ -10,9 +10,22 @@ class AnimeListManager
     private const DIRECTORY = __DIR__ . '/../storage/lists/';
 
     /**
+     * @return array
+     */
+    public static function listAll(): array
+    {
+        $lists = [];
+        foreach (glob(self::DIRECTORY . '*.json') as $filename) {
+            $lists[] = basename($filename, '.json');
+        }
+
+        return $lists;
+    }
+
+    /**
      * @return AnimeList[]
      */
-    public static function loadAll()
+    public static function loadAll(): array
     {
         $lists = [];
         foreach (glob(self::DIRECTORY . '*.json') as $filename) {
@@ -41,7 +54,7 @@ class AnimeListManager
             $content = file_get_contents($filename);
             $list = json_decode($content);
 
-            if (!JSON_ERROR_NONE !== json_last_error()) {
+            if (JSON_ERROR_NONE !== json_last_error()) {
                 throw new \RuntimeException('JSON error: ' . json_last_error_msg());
             }
 

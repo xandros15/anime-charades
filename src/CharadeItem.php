@@ -4,7 +4,7 @@
 namespace App;
 
 
-class CharadeItem implements \Countable
+class CharadeItem implements \Countable, \JsonSerializable
 {
     /** @var string */
     private $name;
@@ -62,5 +62,21 @@ class CharadeItem implements \Countable
     public function count()
     {
         return $this->count;
+    }
+
+    /**
+     * Specify data which should be serialized to JSON
+     * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
+     * @return mixed data which can be serialized by <b>json_encode</b>,
+     * which is a value of any type other than a resource.
+     * @since 5.4.0
+     */
+    public function jsonSerialize()
+    {
+        return [
+            'count' => $this->count,
+            'users' => $this->users,
+            'name' => $this->name,
+        ];
     }
 }

@@ -1,0 +1,11 @@
+<form class="form-fetch" action="{{ path }}" method="post">
+    {% for check in lists %}
+        <div class="form-check">
+            <label class="form-check-label">
+                <input class="form-check-input" type="checkbox" value="{{ check }}" name="lists[]">
+                {{ check }} list
+            </label>
+        </div>
+    {% endfor %}
+    <button class="btn btn-success">Create new game</button>
+</form>

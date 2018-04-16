@@ -1,0 +1,4 @@
+{% extends 'base.twig' %}
+{% block content %}
+    {% include '_join-form.twig' with {game: game, path:path_for('online.join', {game:game})} %}
+{% endblock %}

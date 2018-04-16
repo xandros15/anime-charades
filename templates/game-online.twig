@@ -1,0 +1,5 @@
+{% extends 'game.twig' %}
+{% block content %}
+    {{ parent() }}
+    <a class="btn btn-success" href="{{ path_for('online.next', {game:game}) }}">Następny gracz</a>
+{% endblock %}
