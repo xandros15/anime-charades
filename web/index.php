@@ -179,7 +179,7 @@ $slim->group('/online', function () {
 $slim->get('/restart', function (Request $request, Response $response) {
     $this->charades->delete('single');
 
-    return $response->withRedirect($this->router->pathFor('single.create'));
+    return $response->withRedirect($this->router->pathFor('single.new'));
 })->setName('single.restart');
 
 $slim->post('/new', function (Request $request, Response $response) {
