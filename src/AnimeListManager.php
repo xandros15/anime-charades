@@ -73,6 +73,6 @@ class AnimeListManager
     {
         $filename = self::DIRECTORY . $list->getName() . '.json';
         file_put_contents($filename, (string) $list);
-        chmod($filename, '0777');
+        chmod($filename, 0777);
     }
 }

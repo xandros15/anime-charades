@@ -54,6 +54,7 @@ class AnimeCharades implements \JsonSerializable
             $filename = sprintf(self::GAMES_DIR, $this->name);
             $json = json_encode($this);
             file_put_contents($filename, $json);
+            chmod($filename, 0777);
         }
     }
 
