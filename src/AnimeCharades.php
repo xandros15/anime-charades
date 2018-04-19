@@ -114,6 +114,14 @@ class AnimeCharades implements \JsonSerializable
     }
 
     /**
+     * @return bool
+     */
+    public function hasItems(): bool
+    {
+        return !empty($this->list);
+    }
+
+    /**
      * @return CharadeItem
      */
     public function roll(): CharadeItem

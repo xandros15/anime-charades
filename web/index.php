@@ -96,6 +96,10 @@ $slim->group('/online', function () {
                 return $this->view->render($response, 'game-message.twig', [
                     'message' => 'Gra jeszcze nie wystartowała',
                 ]);
+            } elseif (!$game->hasItems()) {
+                return $this->view->render($response, 'game-message.twig', [
+                    'message' => 'Skończyły się słowa',
+                ]);
             } else {
                 if ($_SESSION['game'][$request->getAttribute('game')]['nickname'] == $game->getCurrentPlayer()) {
                     $anime = $game->roll();
@@ -211,6 +215,12 @@ $slim->get('[/]', function (Request $request, Response $response) {
         $charades = $this->charades->load('single');
     } catch (\RuntimeException $e) {
         return $response->withRedirect($this->router->pathFor('single.new'));
+    }
+
+    if (!$charades->hasItems()) {
+        return $this->view->render($response, 'game-message.twig', [
+            'message' => 'Skończyły się słowa',
+        ]);
     }
 
     $anime = $charades->roll();
