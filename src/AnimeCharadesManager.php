@@ -106,6 +106,8 @@ class AnimeCharadesManager
             }
         }
 
+        shuffle($items);
+
         usort($items, function (CharadeItem $a, CharadeItem $b) {
             return $b->count() <=> $a->count();
         });
