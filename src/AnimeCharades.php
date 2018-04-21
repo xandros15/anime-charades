@@ -84,9 +84,6 @@ class AnimeCharades implements \JsonSerializable
      */
     public function addPlayer(string $name)
     {
-        if ($this->started) {
-            throw new \RuntimeException('Game is close');
-        }
         if (in_array($name, $this->players)) {
             throw new \RuntimeException('Player already exist');
         }
