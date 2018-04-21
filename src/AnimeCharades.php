@@ -114,6 +114,14 @@ class AnimeCharades implements \JsonSerializable
     }
 
     /**
+     * @return int
+     */
+    public function count(): int
+    {
+        return count($this->list);
+    }
+
+    /**
      * @return bool
      */
     public function hasItems(): bool

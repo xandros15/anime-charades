@@ -112,7 +112,7 @@ $slim->group('/online', function () {
                 } else {
 
                     return $this->view->render($response, 'game-message.twig', [
-                        'message' => 'Pokazuje ' . $game->getCurrentPlayer(),
+                        'message' => 'Pokazuje ' . $game->getCurrentPlayer() . '. Liczba słów pozostałych: ' . $game->count() . '.',
                     ]);
                 }
             }
