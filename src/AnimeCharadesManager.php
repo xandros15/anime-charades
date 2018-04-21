@@ -48,6 +48,9 @@ class AnimeCharadesManager
         }
         $json = file_get_contents($filename);
         $game = json_decode($json, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \RuntimeException(json_last_error_msg());
+        }
         unset($json);
 
         return new AnimeCharades(
