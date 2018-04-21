@@ -4,7 +4,7 @@
 namespace App;
 
 
-class AnimeCharades implements \JsonSerializable
+class AnimeCharades implements \JsonSerializable, \Countable
 {
 
     const GAMES_DIR = __DIR__ . '/../storage/games/%s.json';
