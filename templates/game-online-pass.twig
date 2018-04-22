@@ -1,0 +1,23 @@
+{% extends 'game.twig' %}
+{% block content %}
+    <h1>
+        Pokazuje <span id="player-name">{{ charades.getCurrentPlayer() }}</span>.
+        Liczba słów pozostałych:
+        <span id="game-count">{{ charades.count() }}</span>.
+    </h1>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        setInterval(function () {
+            $.get('{{ path_for('online.pass', {game:game}) }}', function (response) {
+                if (response.isReload) {
+                    location.reload();
+                } else {
+                    document.querySelector('#player-name').innerHTML = response.currentPlayer;
+                    document.querySelector('#game-count').innerHTML = response.gameCount;
+                }
+            });
+        }, 3000);
+    </script>
+{% endblock %}

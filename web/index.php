@@ -101,7 +101,8 @@ $slim->group('/online', function () {
                     'message' => 'Skończyły się słowa',
                 ]);
             } else {
-                if ($_SESSION['game'][$request->getAttribute('game')]['nickname'] == $game->getCurrentPlayer()) {
+                if ($_SESSION['game'][$request->getAttribute('game')]['nickname']
+                    == $game->getCurrentPlayer()) {
                     $anime = $game->roll();
 
                     return $this->view->render($response, 'game-online.twig', [
@@ -111,13 +112,31 @@ $slim->group('/online', function () {
                     ]);
                 } else {
 
-                    return $this->view->render($response, 'game-message.twig', [
-                        'message' => 'Pokazuje ' . $game->getCurrentPlayer() . '. Liczba słów pozostałych: ' . $game->count() . '.',
+                    return $this->view->render($response, 'game-online-pass.twig', [
+                        'charades' => $game,
+                        'game' => $gameName,
                     ]);
                 }
             }
 
         })->setName('online.game');
+
+
+        $slim->get('/pass', function (Request $request, Response $response) {
+            $gameName = $request->getAttribute('game');
+            try {
+                /** @var $game AnimeCharades */
+                $game = $this->charades->load($gameName);
+            } catch (\RuntimeException $e) {
+                throw new NotFoundException($request, $response);
+            }
+
+            return $response->withJson([
+                'isReload' => $game->getCurrentPlayer() == $_SESSION['game'][$request->getAttribute('game')]['nickname'],
+                'currentPlayer' => $game->getCurrentPlayer(),
+                'gameCount' => $game->count(),
+            ]);
+        })->setName('online.pass');
 
         $slim->get('/next', function (Request $request, Response $response) {
             $gameName = $request->getAttribute('game');
