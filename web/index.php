@@ -112,7 +112,7 @@ $slim->group('/online', function () {
                     ]);
                 } else {
 
-                    return $this->view->render($response, 'game-online-pass.twig', [
+                    return $this->view->render($response, 'game-online-status.twig', [
                         'charades' => $game,
                         'game' => $gameName,
                     ]);
@@ -122,7 +122,7 @@ $slim->group('/online', function () {
         })->setName('online.game');
 
 
-        $slim->get('/pass', function (Request $request, Response $response) {
+        $slim->get('/status', function (Request $request, Response $response) {
             $gameName = $request->getAttribute('game');
             try {
                 /** @var $game AnimeCharades */
@@ -136,7 +136,7 @@ $slim->group('/online', function () {
                 'currentPlayer' => $game->getCurrentPlayer(),
                 'gameCount' => $game->count(),
             ]);
-        })->setName('online.pass');
+        })->setName('online.status');
 
         $slim->get('/next', function (Request $request, Response $response) {
             $gameName = $request->getAttribute('game');

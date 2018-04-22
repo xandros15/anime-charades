@@ -10,7 +10,7 @@
 {% block scripts %}
     <script>
         setInterval(function () {
-            $.get('{{ path_for('online.pass', {game:game}) }}', function (response) {
+            $.get('{{ path_for('online.status', {game:game}) }}', function (response) {
                 if (response.isReload) {
                     location.reload();
                 } else {
