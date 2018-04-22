@@ -7,8 +7,6 @@ namespace App;
 class AnimeCharades implements \JsonSerializable, \Countable
 {
 
-    const GAMES_DIR = __DIR__ . '/../storage/games/%s.json';
-
     /** @var CharadeItem[] */
     private $done = [];
     /** @var CharadeItem[] */
@@ -50,11 +48,9 @@ class AnimeCharades implements \JsonSerializable, \Countable
 
     public function __destruct()
     {
-        if ($this->name) {
-            $filename = sprintf(self::GAMES_DIR, $this->name);
-            $json = json_encode($this);
-            file_put_contents($filename, $json);
-            chmod($filename, 0777);
+        if ($this->getName()) {
+            $manager = new AnimeCharadesManager();
+            $manager->save($this);
         }
     }
 

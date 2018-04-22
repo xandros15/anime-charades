@@ -9,6 +9,7 @@ use App\Database\Translator;
 class AnimeCharadesManager
 {
     const NUMBER_OF_POSITIONS = 100;
+    const GAMES_DIR = __DIR__ . '/../storage/games/%s.json';
 
     /**
      * @param array $lists
@@ -29,9 +30,23 @@ class AnimeCharadesManager
 
     }
 
+    /**
+     * @param AnimeCharades $game
+     */
+    public function save(AnimeCharades $game)
+    {
+        $filename = sprintf(self::GAMES_DIR, $game->getName());
+        $json = json_encode($game);
+        file_put_contents($filename, $json);
+        chmod($filename, 0777);
+    }
+
+    /**
+     * @param string $name
+     */
     public function delete(string $name)
     {
-        $filename = sprintf(AnimeCharades::GAMES_DIR, $name);
+        $filename = sprintf(self::GAMES_DIR, $name);
         @unlink($filename);
     }
 
@@ -42,7 +57,7 @@ class AnimeCharadesManager
      */
     public function load(string $name): AnimeCharades
     {
-        $filename = sprintf(AnimeCharades::GAMES_DIR, $name);
+        $filename = sprintf(self::GAMES_DIR, $name);
         if (!file_exists($filename)) {
             throw new \RuntimeException('Game file not found');
         }
