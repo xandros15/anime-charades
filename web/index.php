@@ -173,7 +173,7 @@ $slim->group('/online', function () {
         $slim->post('/join', function (Request $request, Response $response) {
             $gameName = $request->getAttribute('game');
             if (isset($_SESSION['game'][$request->getAttribute('game')]['nickname'])) {
-                return $response->withRedirect($this->router->pathFor('online.game', $gameName));
+                return $response->withRedirect($this->router->pathFor('online.game', ['game' => $gameName]));
             }
 
             $nickname = $request->getParam('nickname');
