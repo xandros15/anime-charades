@@ -25,6 +25,15 @@ class Translator
 
     /**
      * @param string $name
+     */
+    private function addNewRecord(string $name): void
+    {
+        $stmt = $this->connection->prepare("INSERT INTO anime (name) VALUES (:name)");
+        $stmt->execute(['name' => $name]);
+    }
+
+    /**
+     * @param string $name
      *
      * @return string
      */
@@ -34,6 +43,9 @@ class Translator
             $stmt = $this->connection->prepare("SELECT main FROM anime WHERE name = ? LIMIT 1");
             $stmt->execute([$name]);
             $item = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$item) {
+                $this->addNewRecord($name);
+            }
             $this->translations[$name] = $item['main'] ?: $name;
         }
 
