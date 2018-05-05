@@ -94,4 +94,15 @@ class Anime
         return $this->connection->query("SELECT * FROM anime ORDER BY name LIMIT 500 OFFSET " . $offset,
             PDO::FETCH_ASSOC);
     }
+
+    /**
+     * @return array
+     */
+    public function allTitles(): array
+    {
+        $stmt = $this->connection->prepare("SELECT name FROM anime ORDER BY name");
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+    }
 }

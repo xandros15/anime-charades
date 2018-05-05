@@ -249,42 +249,39 @@ $slim->get('[/]', function (Request $request, Response $response) {
     ]);
 })->setName('single');
 
-$slim->get('/anime', function (Request $request, Response $response) {
-    $page = $request->getParam('p', 1);
-    $search = $request->getParam('s', '');
-    $items = $search ? $this->anime->search($search, $page) : $this->anime->list($page);
 
-    return $this->view->render($response, 'list.twig', ['items' => $items, 'page' => $page]);
-})->setName('anime.index');
+$slim->group('/anime', function () {
+    /** @var $slim App */
+    $slim = $this;
 
-$slim->post('/anime/update/{id:\d+}', function (Request $request, Response $response) {
-    $id = (int) $request->getAttribute('id');
-    $name = (string) trim($request->getParam('name', ''));
-    if (!$name) {
-        throw new NotFoundException($request, $response);
-    }
+    $slim->get('[/]', function (Request $request, Response $response) {
+        $page = $request->getParam('p', 1);
+        $search = $request->getParam('s', '');
+        $items = $search ? $this->anime->search($search, $page) : $this->anime->list($page);
+        $titles = $this->anime->allTitles();
 
-    $this->anime->update($id, $name);
+        return $this->view->render($response, 'list.twig', ['items' => $items, 'page' => $page, 'titles' => $titles]);
+    })->setName('anime.index');
 
-    return $this->view->render($response, '_delete-form.twig', ['id' => $id, 'main' => $name]);
-})->setName('anime.update');
+    $slim->post('/update/{id:\d+}', function (Request $request, Response $response) {
+        $id = (int) $request->getAttribute('id');
+        $name = (string) trim($request->getParam('name', ''));
+        if (!$name) {
+            throw new NotFoundException($request, $response);
+        }
 
-$slim->post('/anime/delete/{id:\d+}', function (Request $request, Response $response) {
-    $id = (int) $request->getAttribute('id');
-    $this->anime->delete($id);
+        $this->anime->update($id, $name);
 
-    return $this->view->render($response, '_update-form.twig', ['id' => $id]);
-})->setName('anime.delete');
+        return $this->view->render($response, '_delete-form.twig', ['id' => $id, 'main' => $name]);
+    })->setName('anime.update');
 
-$slim->get('/anime/hint', function (Request $request, Response $response) {
-    if (!$name = $request->getParam('query')) {
-        throw new NotFoundException($request, $response);
-    }
+    $slim->post('/delete/{id:\d+}', function (Request $request, Response $response) {
+        $id = (int) $request->getAttribute('id');
+        $this->anime->delete($id);
 
-    $payload = $this->anime->hint($name);
-
-    return $response->withJson($payload);
-})->setName('anime.hint');
+        return $this->view->render($response, '_update-form.twig', ['id' => $id]);
+    })->setName('anime.delete');
+});
 
 $slim->post('/fetch', function (Request $request, Response $response) {
     $nickname = $request->getParam('nickname');

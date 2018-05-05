@@ -48,12 +48,13 @@
 {% block scripts %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
     <script>
+        var titles = {{ titles | json_encode | raw }};
+    </script>
+    <script>
         function typeheadCall() {
             if (this.value.length > 3) {
                 var that = this;
-                $.get("{{ path_for('anime.hint') }}", {query: this.value}, function (data) {
-                    $(that).typeahead({source: data});
-                }, 'json');
+                $(that).typeahead({source: titles});
             }
         }
 
