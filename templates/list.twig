@@ -45,19 +45,24 @@
 <span><a href="{{ path_for('anime.index', {}, {'p':  max(page - 1, 1)}) }}">Prev</a> | <a
             href="{{ path_for('anime.index', {}, {'p':   min(page + 1, 13)}) }}">Next</a></span>
 {% endblock %}
+{% block styles %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.2/awesomplete.min.css" rel="stylesheet">
+    <style>
+        .awesomplete {
+            -webkit-box-flex: 1;
+            -ms-flex: 1 1 auto;
+            flex: 1 1 auto;
+            width: 1%;
+            margin-bottom: 0;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+    </style>
+{% endblock %}
 {% block scripts %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.2/awesomplete.min.js"></script>
     <script>
         var titles = {{ titles | json_encode | raw }};
-    </script>
-    <script>
-        function typeheadCall() {
-            if (this.value.length > 3) {
-                var that = this;
-                $(that).typeahead({source: titles});
-            }
-        }
-
         function onUpdate(e) {
             e.preventDefault();
             var that = this;
@@ -74,13 +79,17 @@
             $.post(this.action, function (payload) {
                 var container = that.parentElement;
                 container.innerHTML = payload;
-                var form = $(container).find('.form-update')
+                var form = $(container).find('.form-update');
                 form.submit(onUpdate);
-                form.find('.typeahead').on('input', typeheadCall);
+                const aws = new Awesomplete(form.find('.typeahead')[0]);
+                aws.list = titles;
             });
         }
 
-        $('.typeahead').on('input', typeheadCall);
+        $('.typeahead').each(function (i, item) {
+            const aws = new Awesomplete(item);
+            aws.list = titles;
+        });
         $('.form-update').submit(onUpdate);
         $('.form-delete').submit(onDelete);
     </script>
