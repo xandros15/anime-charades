@@ -19,6 +19,11 @@ class Mal
         self::STATUS_WATCHED,
     ];
 
+    private const ACCEPTED_STATUS_FILE = [
+        'Completed',
+        'Watching',
+    ];
+
     /**
      * @param string $nick
      *
@@ -37,6 +42,36 @@ class Mal
 
         $response->filter('anime')->each(function (Crawler $item) use (&$list) {
             if (in_array($item->filter('my_status')->text(), self::ACCEPTED_STATUS)) {
+                $list[] = $item->filter('series_title')->text();
+            }
+        });
+
+        return new AnimeList($nick, $list);
+    }
+
+    /**
+     * @param string $nick
+     * @param string $filename
+     *
+     * @return AnimeList
+     */
+    public function fetchFromFile(string $nick, string $filename)
+    {
+        if (!file_exists($filename)) {
+            throw new \InvalidArgumentException("$filename no exist");
+        }
+
+        $mime = (new \finfo())->file($filename, FILEINFO_MIME_TYPE);
+
+        $content = file_get_contents($filename);
+        if ($mime === 'application/x-gzip') {
+            $content = gzdecode($content);
+        }
+
+        $list = [];
+        $response = new Crawler($content);
+        $response->filter('myanimelist > anime')->each(function (Crawler $item) use (&$list) {
+            if (in_array($item->filter('my_status')->text(), self::ACCEPTED_STATUS_FILE)) {
                 $list[] = $item->filter('series_title')->text();
             }
         });

@@ -296,5 +296,21 @@ $slim->post('/fetch', function (Request $request, Response $response) {
     return $response->withRedirect($referer);
 })->setName('fetch');
 
+$slim->post('/fetch-file', function (Request $request, Response $response) {
+    $nickname = $request->getParam('nickname');
+    /** @var $file \Slim\Http\UploadedFile | null */
+    $file = $request->getUploadedFiles()['file'] ?? null;
+    if (!$nickname || !$file) {
+        return $this->view->render($response, 'game-message.twig', ['message' => 'Może być wpisał jakąś liste']);
+    }
+
+    $mal = new Mal();
+    $list = $mal->fetchFromFile($nickname, $file->file);
+    $this->listManager->save($list);
+    $referer = $request->getServerParam('HTTP_REFERER');
+
+    return $response->withRedirect($referer);
+})->setName('fetch.file');
+
 
 $slim->run();

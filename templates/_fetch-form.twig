@@ -1,10 +1,32 @@
-<form class="form-fetch" action="{{ path_for('fetch') }}" method="post">
-    <div class="input-group" style="position: relative">
-        <input id="join-input" type="text"
-               class="form-control btn-group" autocomplete="off"
-               name="nickname" title="your nickname">
-        <div class="input-group-append">
-            <button class="btn btn-outline-secondary">Fetch</button>
+<div style="margin-bottom: 1rem">
+    <h2>Fetch from API</h2>
+    <form class="form-fetch" action="{{ path_for('fetch') }}" method="post">
+        <div class="input-group" style="position: relative">
+            <input id="fetch-input" type="text"
+                   class="form-control btn-group" autocomplete="off"
+                   name="nickname" title="nickname" placeholder="nickname">
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary">Fetch</button>
+            </div>
         </div>
-    </div>
-</form>
+    </form>
+</div>
+<div style="margin-bottom: 1rem">
+    <h2>Fetch from file</h2>
+    <form class="form-fetch" action="{{ path_for('fetch.file') }}" method="post" enctype="multipart/form-data">
+        <div class="custom-file" style="margin-bottom: 1rem">
+            <input id="fetch-file-input" type="file" accept="text/xml,application/gzip"
+                   class="custom-file-input" autocomplete="off"
+                   name="file" title="file">
+            <label class="custom-file-label" for="fetch-file-input">Choose file</label>
+        </div>
+        <div class="input-group" style="position: relative">
+            <input id="fetch-file-nickname-input" type="text"
+                   class="form-control btn-group" autocomplete="off"
+                   name="nickname" title="nickname" placeholder="nickname">
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary">Fetch</button>
+            </div>
+        </div>
+    </form>
+</div>
